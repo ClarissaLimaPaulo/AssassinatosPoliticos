@@ -96,7 +96,7 @@ for e in filtered['Vítimas_Etnia'].dropna().unique():
 
 # Adicionar marcadores
 for _, row in filtered.iterrows():
-    popup_info = f"""<b>Vítima:</b> {row['Vítima_Nome Civil*(Apelido/Nome Social)']}<br>
+    popup_info = f"""<b>Vítima:</b> {row['Vítima_Nome Civil_(Apelido/Nome Social)']}<br>
 <b>Descrição:</b> {row['Descrição']}<br>
 <b>Data:</b> {row['data_formatada']}<br>
 <b>Instrumento:</b> {row['Instrumento_1']}<br>
