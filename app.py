@@ -200,8 +200,7 @@ if current_page == "home":
     st.subheader("Angela Alonso (USP/Cebrap)")
     
     st.markdown("""
-    ### Descrição
-    
+    ###
     Levantamento e análise de letalidade política no Brasil, com objetivo de observar uma relação 
     entre violência política e hierarquia social, além de padrões recorrentes de violência política 
     que se cristalizam em estilos de assassinato político.
