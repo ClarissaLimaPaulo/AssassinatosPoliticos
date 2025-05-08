@@ -10,7 +10,7 @@ from jinja2 import Template
 # Configuração da página
 st.set_page_config(
     page_title="Assassinatos Políticos no Brasil",
-    page_icon="🗺️",
+    page_icon="🔍",
     layout="wide",
     initial_sidebar_state="expanded"
 )
