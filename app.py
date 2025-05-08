@@ -32,22 +32,12 @@ def load_data():
         df = pd.read_csv("assassinatos_com_coordenadas (1) (1).csv")
         df.rename(columns=lambda x: x.strip(), inplace=True)
         
-        # Verifica se tem dados e colunas corretas
-        st.sidebar.info(f"Carregados {len(df)} registros")
-        
         # Corrige coordenadas
         df["Latitude"] = df["Latitude"].apply(corrigir_coordenada)
         df["Longitude"] = df["Longitude"].apply(corrigir_coordenada)
         
         # Remove registros sem coordenadas válidas
-        df_original = len(df)
         df = df.dropna(subset=["Latitude", "Longitude"])
-        st.sidebar.info(f"Mantidos {len(df)} de {df_original} registros com coordenadas válidas")
-        
-        # Verifica limites de coordenadas
-        if len(df) > 0:
-            st.sidebar.info(f"Limites de Latitude: {df['Latitude'].min()} a {df['Latitude'].max()}")
-            st.sidebar.info(f"Limites de Longitude: {df['Longitude'].min()} a {df['Longitude'].max()}")
         
         # Converte ano para inteiro
         df["Ano"] = pd.to_numeric(df["Ano"], errors='coerce').astype('Int64')
@@ -118,8 +108,7 @@ if genero and "Vítima_Gênero/Sexo" in df.columns:
 if etnia and "Vítimas_Etnia" in df.columns:
     filtered = filtered[filtered["Vítimas_Etnia"].isin(etnia)]
 
-st.title("Monitor de Assassinatos Políticos no Brasil")
-st.write(f"Exibindo {len(filtered)} casos dos {len(df)} registros totais")
+st.title("Sangue na Política")
 
 # Função de cor por tipo
 def get_color(tipo):
@@ -186,7 +175,7 @@ else:
             ).add_to(m)
             
         except Exception as e:
-            st.sidebar.warning(f"Erro ao adicionar marcador: {e}")
+            # Silenciosamente ignora erros ao adicionar marcadores
             continue
     
     # Adiciona legenda ao mapa
