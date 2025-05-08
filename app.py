@@ -204,8 +204,6 @@ if current_page == "home":
     entre violência política e hierarquia social, além de padrões recorrentes de violência política 
     que se cristalizam em estilos de assassinato político.
     """)
-
-    st.image ("cebrap2.jpg", use_container_width=True)
     # Adicionar imagem ilustrativa se desejar
     # st.image("imagem_ilustrativa.jpg", caption="Imagem Ilustrativa", use_column_width=True)
 
