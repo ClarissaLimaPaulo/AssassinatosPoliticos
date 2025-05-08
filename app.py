@@ -420,26 +420,39 @@ elif current_page == "timeline":
             try:
                 date_cols = [col for col in ['year', 'month', 'day'] if col in df_timeline.columns]
                 if len(date_cols) > 0:
-                    df_timeline['Data'] = pd.to_datetime(df_timeline[date_cols], errors='coerce')
+                    # Certifique-se de que as colunas year e month são numéricas
+            if 'year' in df_timeline.columns:
+                df_timeline['year'] = pd.to_numeric(df_timeline['year'], errors='coerce')
+            if 'month' in df_timeline.columns:
+                df_timeline['month'] = pd.to_numeric(df_timeline['month'], errors='coerce')
+            
+            # Cria data com tratamento para valores não numéricos
+            df_timeline['Data'] = pd.to_datetime(df_timeline[date_cols], errors='coerce')
                     df_timeline = df_timeline.dropna(subset=['Data']).sort_values(by='Data')
                     
-                    # Cria coluna de descrição para hover
-                    descricao_parts = []
-                    if 'Tipo_ação_vítima' in df_timeline.columns:
-                        descricao_parts.append("Tipo: " + df_timeline['Tipo_ação_vítima'].astype(str))
-                    if 'Vítimas_Etnia' in df_timeline.columns:
-                        descricao_parts.append("Etnia: " + df_timeline['Vítimas_Etnia'].astype(str))
-                    if 'Vítimas_Afiliação_1/Grupo' in df_timeline.columns:
-                        descricao_parts.append("Grupo: " + df_timeline['Vítimas_Afiliação_1/Grupo'].astype(str))
-                    if 'Cidade' in df_timeline.columns:
-                        descricao_parts.append("Cidade: " + df_timeline['Cidade'].astype(str))
-                    if 'Disputa' in df_timeline.columns:
-                        descricao_parts.append("Disputa: " + df_timeline['Disputa'].astype(str))
-                    
+                    # Cria coluna de descrição para hover de forma segura
                     df_timeline['Descrição'] = ""
-                    for i, parts in enumerate(zip(*[df_timeline[part.split(": ")[0]] for part in descricao_parts])):
-                        desc = "<br>".join([f"{name.split(': ')[0]}: {value}" for name, value in zip(descricao_parts, parts)])
-                        df_timeline.loc[df_timeline.index[i], 'Descrição'] = desc
+                    
+                    # Adiciona cada campo disponível à descrição
+                    for i, row in df_timeline.iterrows():
+                        desc_parts = []
+                        
+                        if 'Tipo_ação_vítima' in df_timeline.columns and not pd.isna(row.get('Tipo_ação_vítima')):
+                            desc_parts.append(f"Tipo: {row['Tipo_ação_vítima']}")
+                            
+                        if 'Vítimas_Etnia' in df_timeline.columns and not pd.isna(row.get('Vítimas_Etnia')):
+                            desc_parts.append(f"Etnia: {row['Vítimas_Etnia']}")
+                            
+                        if 'Vítimas_Afiliação_1/Grupo' in df_timeline.columns and not pd.isna(row.get('Vítimas_Afiliação_1/Grupo')):
+                            desc_parts.append(f"Grupo: {row['Vítimas_Afiliação_1/Grupo']}")
+                            
+                        if 'Cidade' in df_timeline.columns and not pd.isna(row.get('Cidade')):
+                            desc_parts.append(f"Cidade: {row['Cidade']}")
+                            
+                        if 'Disputa' in df_timeline.columns and not pd.isna(row.get('Disputa')):
+                            desc_parts.append(f"Disputa: {row['Disputa']}")
+                        
+                        df_timeline.at[i, 'Descrição'] = "<br>".join(desc_parts) if desc_parts else "Sem informações adicionais"
                     
                     # Cria o gráfico da linha do tempo
                     fig = px.scatter(
