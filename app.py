@@ -205,7 +205,7 @@ if current_page == "home":
     que se cristalizam em estilos de assassinato político.
     """)
 
-    st.image ("cebrap2.jpg", use_column_width=True)
+    st.image ("cebrap2.jpg", use_container_width=True)
     # Adicionar imagem ilustrativa se desejar
     # st.image("imagem_ilustrativa.jpg", caption="Imagem Ilustrativa", use_column_width=True)
 
