@@ -277,35 +277,70 @@ elif current_page == "timeline":
     # Página da linha do tempo
     st.title("Monitor de Assassinatos Políticos no Brasil")
     st.subheader("Linha do Tempo de Casos")
-df_timeline = filtered[[
-    'Ano', 'Mês', 'Tipo_ação_vítima', 'Vítimas_Etnia',
-    'Vítimas_Afiliação_1/Grupo', 'Cidade', 'Disputa'
-]].copy()
-
-df_timeline = df_timeline.rename(columns={'Ano': 'year', 'Mês': 'month'})
-df_timeline['day'] = 1
-df_timeline['Data'] = pd.to_datetime(df_timeline[['year', 'month', 'day']], errors='coerce')
-df_timeline = df_timeline.dropna(subset=['Data']).sort_values(by='Data')
-
-df_timeline['Descrição'] = (
-    "Tipo: " + df_timeline['Tipo_ação_vítima'].fillna("Não informado") + "<br>" +
-    "Etnia: " + df_timeline['Vítimas_Etnia'].fillna("Não informada") + "<br>" +
-    "Afiliação: " + df_timeline['Vítimas_Afiliação_1/Grupo'].fillna("Não informada") + "<br>" +
-    "Cidade: " + df_timeline['Cidade'].fillna("Não informada") + "<br>" +
-    "Disputa: " + df_timeline['Disputa'].fillna("Não informada")
-)
-
-fig = px.scatter(
-    df_timeline,
-    x='Data',
-    y='Cidade',
-    color='Tipo_ação_vítima',
-    hover_name='Cidade',
-    custom_data=['Descrição'],
-    title="Linha do Tempo de Casos",
-    labels={'Cidade': 'Local'},
-    height=600
-)
-fig.update_traces(hovertemplate='%{customdata[0]}<extra></extra>')
-fig.update_layout(xaxis_title="Data", yaxis_title="Cidade", showlegend=True)
-st.plotly_chart(fig)
+    
+    if len(filtered) > 0:
+        # Seleciona colunas relevantes
+        colunas_disponiveis = ['Ano', 'Mês', 'Tipo_ação_vítima', 'Vítimas_Etnia',
+                            'Vítimas_Afiliação_1/Grupo', 'Cidade', 'Disputa']
+        colunas_existentes = [col for col in colunas_disponiveis if col in filtered.columns]
+        
+        if len(colunas_existentes) >= 3:  # Mínimo necessário para criar a timeline
+            df_timeline = filtered[colunas_existentes].copy()
+            
+            # Renomeia colunas para processamento de data
+            if 'Ano' in df_timeline.columns:
+                df_timeline = df_timeline.rename(columns={'Ano': 'year'})
+            if 'Mês' in df_timeline.columns:
+                df_timeline = df_timeline.rename(columns={'Mês': 'month'})
+                
+            # Adiciona coluna de dia para criar datetime
+            df_timeline['day'] = 1
+            
+            # Cria coluna de data
+            try:
+                date_cols = [col for col in ['year', 'month', 'day'] if col in df_timeline.columns]
+                if len(date_cols) > 0:
+                    df_timeline['Data'] = pd.to_datetime(df_timeline[date_cols], errors='coerce')
+                    df_timeline = df_timeline.dropna(subset=['Data']).sort_values(by='Data')
+                    
+                    # Cria coluna de descrição para hover
+                    descricao_parts = []
+                    if 'Tipo_ação_vítima' in df_timeline.columns:
+                        descricao_parts.append("Tipo: " + df_timeline['Tipo_ação_vítima'].fillna("Não informado"))
+                    if 'Vítimas_Etnia' in df_timeline.columns:
+                        descricao_parts.append("Etnia: " + df_timeline['Vítimas_Etnia'].fillna("Não informada"))
+                    if 'Vítimas_Afiliação_1/Grupo' in df_timeline.columns:
+                        descricao_parts.append("Afiliação: " + df_timeline['Vítimas_Afiliação_1/Grupo'].fillna("Não informada"))
+                    if 'Cidade' in df_timeline.columns:
+                        descricao_parts.append("Cidade: " + df_timeline['Cidade'].fillna("Não informada"))
+                    if 'Disputa' in df_timeline.columns:
+                        descricao_parts.append("Disputa: " + df_timeline['Disputa'].fillna("Não informada"))
+                    
+                    df_timeline['Descrição'] = ["<br>".join([p for p in row]) for row in zip(*[parts for parts in descricao_parts])]
+                    
+                    # Cria gráfico
+                    if 'Cidade' in df_timeline.columns and 'Tipo_ação_vítima' in df_timeline.columns:
+                        fig = px.scatter(
+                            df_timeline,
+                            x='Data',
+                            y='Cidade',
+                            color='Tipo_ação_vítima',
+                            hover_name='Cidade',
+                            custom_data=['Descrição'],
+                            title="Linha do Tempo de Casos",
+                            labels={'Cidade': 'Local'},
+                            height=600
+                        )
+                        fig.update_traces(hovertemplate='%{customdata[0]}<extra></extra>')
+                        fig.update_layout(xaxis_title="Data", yaxis_title="Cidade", showlegend=True)
+                        st.plotly_chart(fig)
+                    else:
+                        st.warning("Dados insuficientes para criar a linha do tempo.")
+                else:
+                    st.warning("Colunas de data necessárias não encontradas para criar a linha do tempo.")
+            except Exception as e:
+                st.error(f"Erro ao criar a linha do tempo: {e}")
+        else:
+            st.warning("Dados insuficientes para criar a linha do tempo.")
+    else:
+        st.warning("Não há dados para exibir na linha do tempo com os filtros atuais.")
