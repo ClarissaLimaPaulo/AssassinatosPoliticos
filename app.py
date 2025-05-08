@@ -6,6 +6,116 @@ import plotly.express as px
 from folium.plugins import MarkerCluster
 from branca.element import MacroElement
 from jinja2 import Template
+import time
+
+# Código da linha do tempo animada (colar a função render_timeline_page aqui)
+def render_timeline_animated_page(df_filtered):
+    st.title("Linha do Tempo Animada")
+    st.subheader("Visualização temporal dos casos")
+    
+    if len(df_filtered) == 0:
+        st.warning("Não há dados para exibir com os filtros atuais.")
+        return
+    
+    # Certifique-se de que temos a coluna Ano
+    if 'Ano' not in df_filtered.columns or df_filtered['Ano'].isna().all():
+        st.error("Dados de ano não disponíveis para animação.")
+        return
+    
+    # Prepara os dados para a animação
+    df_anim = df_filtered.copy()
+    anos_disponíveis = sorted(df_anim['Ano'].dropna().unique())
+    
+    # Controles de animação
+    col1, col2, col3 = st.columns([2, 1, 1])
+    with col1:
+        velocidade = st.slider("Velocidade da animação (segundos por ano)", 0.5, 5.0, 2.0)
+    with col2:
+        iniciar = st.button("Iniciar animação")
+    with col3:
+        parar = st.button("Parar animação")
+    
+    # Container para o mapa animado
+    mapa_container = st.empty()
+    info_container = st.empty()
+    
+    # Função para criar o mapa de um ano específico
+    def create_year_map(ano):
+        dados_ano = df_anim[df_anim['Ano'] == ano]
+        
+        # Cria o mapa
+        m = folium.Map(
+            location=[-14.235, -51.9253],
+            zoom_start=4,
+            tiles='CartoDB positron'
+        )
+        
+        # Adiciona marcadores para cada caso
+        for _, row in dados_ano.iterrows():
+            try:
+                lat, lon = row['Latitude'], row['Longitude']
+                if pd.isna(lat) or pd.isna(lon) or abs(lat) > 90 or abs(lon) > 180:
+                    continue
+                
+                # Prepara informações para o popup
+                nome = row.get('Vítima_Nome Civil_(Apelido/Nome Social)', 'Nome não disponível')
+                tipo = row.get('Tipo_ação_vítima', 'Tipo não informado')
+                
+                folium.CircleMarker(
+                    location=[lat, lon],
+                    radius=8,
+                    color=get_color(tipo),
+                    fill=True,
+                    fill_color=get_color(tipo),
+                    fill_opacity=0.7,
+                    popup=nome
+                ).add_to(m)
+            except:
+                continue
+                
+        # Adiciona legenda
+        m.add_child(Legend())
+        return m, len(dados_ano)
+    
+    # Estado da animação
+    if iniciar:
+        st.session_state.animating = True
+    if parar:
+        st.session_state.animating = False
+    
+    # Inicializa o estado se não existir
+    if 'animating' not in st.session_state:
+        st.session_state.animating = False
+    
+    # Executar a animação
+    if st.session_state.animating:
+        for ano in anos_disponíveis:
+            if not st.session_state.animating:
+                break
+                
+            # Cria e exibe o mapa do ano atual
+            mapa_ano, num_casos = create_year_map(ano)
+            with mapa_container:
+                st_folium(mapa_ano, width=700, height=500)
+            
+            # Exibe informações sobre o ano
+            with info_container:
+                st.markdown(f"### Ano: {ano}")
+                st.markdown(f"**Número de casos:** {num_casos}")
+            
+            # Pausa para o próximo ano
+            time.sleep(velocidade)
+    else:
+        # Mostra o mapa com todos os dados quando não está animando
+        if anos_disponíveis:
+            ano_inicial = anos_disponíveis[0]
+            mapa_inicial, num_casos = create_year_map(ano_inicial)
+            with mapa_container:
+                st_folium(mapa_inicial, width=700, height=500)
+            with info_container:
+                st.markdown(f"### Ano: {ano_inicial}")
+                st.markdown(f"**Número de casos:** {num_casos}")
+                st.markdown("Clique em 'Iniciar animação' para visualizar a evolução temporal.")
 
 # Configuração da página
 st.set_page_config(
@@ -23,7 +133,7 @@ if 'current_page' not in st.session_state:
 def change_page(page):
     st.session_state.current_page = page
 
-# Função para corrigir coordenadas
+# Função para corrigir coordenada
 def corrigir_coordenada(valor):
     if isinstance(valor, str):
         valor = valor.replace(",", ".")
@@ -127,11 +237,12 @@ def aplicar_filtros(df, year_range, tipo_acao, genero, etnia):
     
     return filtered
 
-# Definir navegação
+# Definir navegação com a nova página de linha do tempo animada
 pages = {
     "Home": "home",
     "Mapa Interativo": "mapa",
-    "Linha do Tempo": "timeline"
+    "Linha do Tempo": "timeline",
+    "Linha do Tempo Animada": "timeline_animada"  # Nova página adicionada
 }
 
 # Barra lateral com navegação
@@ -284,7 +395,7 @@ elif current_page == "mapa":
         st_folium(m, width=700, height=500)
 
 elif current_page == "timeline":
-    # Página da linha do tempo
+    # Página da linha do tempo original
     st.title("Assassinatos Políticos no Brasil")
     
     if len(filtered) > 0:
@@ -315,41 +426,58 @@ elif current_page == "timeline":
                     # Cria coluna de descrição para hover
                     descricao_parts = []
                     if 'Tipo_ação_vítima' in df_timeline.columns:
-                        descricao_parts.append("Tipo: " + df_timeline['Tipo_ação_vítima'].fillna("Não informado"))
+                        descricao_parts.append("Tipo: " + df_timeline['Tipo_ação_vítima'].astype(str))
                     if 'Vítimas_Etnia' in df_timeline.columns:
-                        descricao_parts.append("Etnia: " + df_timeline['Vítimas_Etnia'].fillna("Não informada"))
+                        descricao_parts.append("Etnia: " + df_timeline['Vítimas_Etnia'].astype(str))
                     if 'Vítimas_Afiliação_1/Grupo' in df_timeline.columns:
-                        descricao_parts.append("Afiliação: " + df_timeline['Vítimas_Afiliação_1/Grupo'].fillna("Não informada"))
+                        descricao_parts.append("Grupo: " + df_timeline['Vítimas_Afiliação_1/Grupo'].astype(str))
                     if 'Cidade' in df_timeline.columns:
-                        descricao_parts.append("Cidade: " + df_timeline['Cidade'].fillna("Não informada"))
+                        descricao_parts.append("Cidade: " + df_timeline['Cidade'].astype(str))
                     if 'Disputa' in df_timeline.columns:
-                        descricao_parts.append("Disputa: " + df_timeline['Disputa'].fillna("Não informada"))
+                        descricao_parts.append("Disputa: " + df_timeline['Disputa'].astype(str))
                     
-                    df_timeline['Descrição'] = ["<br>".join([p for p in row]) for row in zip(*[parts for parts in descricao_parts])]
+                    df_timeline['Descrição'] = ""
+                    for i, parts in enumerate(zip(*[df_timeline[part.split(": ")[0]] for part in descricao_parts])):
+                        desc = "<br>".join([f"{name.split(': ')[0]}: {value}" for name, value in zip(descricao_parts, parts)])
+                        df_timeline.loc[df_timeline.index[i], 'Descrição'] = desc
                     
-                    # Cria gráfico
-                    if 'Cidade' in df_timeline.columns and 'Tipo_ação_vítima' in df_timeline.columns:
-                        fig = px.scatter(
-                            df_timeline,
-                            x='Data',
-                            y='Cidade',
-                            color='Tipo_ação_vítima',
-                            hover_name='Cidade',
-                            custom_data=['Descrição'],
-                            title="Linha do Tempo de Casos",
-                            labels={'Cidade': 'Local'},
-                            height=600
-                        )
-                        fig.update_traces(hovertemplate='%{customdata[0]}<extra></extra>')
-                        fig.update_layout(xaxis_title="Data", yaxis_title="Cidade", showlegend=True)
-                        st.plotly_chart(fig)
-                    else:
-                        st.warning("Dados insuficientes para criar a linha do tempo.")
+                    # Cria o gráfico da linha do tempo
+                    fig = px.scatter(
+                        df_timeline, 
+                        x='Data', 
+                        y='Tipo_ação_vítima' if 'Tipo_ação_vítima' in df_timeline.columns else 'Disputa',
+                        color='Tipo_ação_vítima' if 'Tipo_ação_vítima' in df_timeline.columns else None,
+                        hover_name='Descrição',
+                        title='Linha do Tempo de Assassinatos Políticos',
+                        height=600,
+                        size_max=15,
+                        size=[10] * len(df_timeline)
+                    )
+                    
+                    # Configura o layout
+                    fig.update_layout(
+                        xaxis_title='Data',
+                        yaxis_title='Tipo de Ação',
+                        legend_title='Tipo',
+                        hovermode='closest'
+                    )
+                    
+                    # Exibe o gráfico
+                    st.plotly_chart(fig, use_container_width=True)
                 else:
-                    st.warning("Colunas de data necessárias não encontradas para criar a linha do tempo.")
+                    st.warning("Não foi possível criar a linha do tempo: faltam dados de data.")
             except Exception as e:
                 st.error(f"Erro ao criar a linha do tempo: {e}")
         else:
-            st.warning("Dados insuficientes para criar a linha do tempo.")
+            st.warning("Não há colunas suficientes para criar a linha do tempo.")
     else:
-        st.warning("Não há dados para exibir na linha do tempo com os filtros atuais.")
+        st.warning("Não há dados para exibir com os filtros atuais.")
+
+elif current_page == "timeline_animada":
+    # Renderiza a página de linha do tempo animada
+    render_timeline_animated_page(filtered)
+
+# Adiciona informações de rodapé
+st.sidebar.markdown("---")
+st.sidebar.markdown("**Desenvolvido por:** Equipe de Pesquisa")
+st.sidebar.markdown("**Contato:** email@exemplo.com")
