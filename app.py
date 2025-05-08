@@ -286,7 +286,6 @@ elif current_page == "mapa":
 elif current_page == "timeline":
     # Página da linha do tempo
     st.title("Assassinatos Políticos no Brasil")
-    st.subheader("Linha do Tempo")
     
     if len(filtered) > 0:
         # Seleciona colunas relevantes
