@@ -108,7 +108,7 @@ if genero and "Vítima_Gênero/Sexo" in df.columns:
 if etnia and "Vítimas_Etnia" in df.columns:
     filtered = filtered[filtered["Vítimas_Etnia"].isin(etnia)]
 
-st.title("Sangue na Política")
+st.title("Monitor de Assassinatos Políticos no Brasil")
 
 # Função de cor por tipo
 def get_color(tipo):
@@ -181,11 +181,11 @@ else:
     # Adiciona legenda ao mapa
     legend_html = """
     <div style="position: fixed; bottom: 50px; left: 50px; width: 220px;
-    background-color: white; border:2px solid grey; z-index:9999; font-size:14px; padding: 10px;">
+    background-color: white; border:2px solid grey; z-index:9999; font-size:14px; padding: 10px; color: black;">
     <b>Legenda</b><br>
-    <span style="color:red;">●</span> Assassinato<br>
-    <span style="color:green;">●</span> Tentativa de assassinato<br>
-    <span style="color:blue;">●</span> Ameaça de assassinato
+    <span style="color:red;">●</span> <span style="color:black;">Assassinato</span><br>
+    <span style="color:green;">●</span> <span style="color:black;">Tentativa de assassinato</span><br>
+    <span style="color:blue;">●</span> <span style="color:black;">Ameaça de assassinato</span>
     </div>
     """
     m.get_root().html.add_child(Element(legend_html))
