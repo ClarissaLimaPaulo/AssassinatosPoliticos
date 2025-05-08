@@ -4,7 +4,8 @@ import folium
 from streamlit_folium import st_folium
 import plotly.express as px
 from folium.plugins import MarkerCluster
-from folium.elements import Element
+from branca.element import MacroElement
+from jinja2 import Template
 
 # Função para corrigir coordenadas
 def corrigir_coordenada(valor):
@@ -178,17 +179,36 @@ else:
             # Silenciosamente ignora erros ao adicionar marcadores
             continue
     
-      # Adiciona legenda ao mapa
-    legend_html = """
-    <div style="position: fixed; bottom: 50px; left: 50px; width: 220px;
-    background-color: white; border:2px solid grey; z-index:9999; font-size:14px; padding: 10px; color: black;">
-    <b>Legenda</b><br>
-    <span style="color:red;">●</span> <span style="color:black;">Assassinato</span><br>
-    <span style="color:green;">●</span> <span style="color:black;">Tentativa de assassinato</span><br>
-    <span style="color:blue;">●</span> <span style="color:black;">Ameaça de assassinato</span>
-    </div>
-    """
-    m.get_root().html.add_child(Element(legend_html))
+    # Criar classe de legenda personalizada
+    class Legend(MacroElement):
+        def __init__(self):
+            super(Legend, self).__init__()
+            self._template = Template("""
+                {% macro script(this, kwargs) %}
+                    var legend = L.control({position: 'bottomleft'});
+                    legend.onAdd = function (map) {
+                        var div = L.DomUtil.create('div', 'info legend');
+                        div.style.padding = '6px 8px';
+                        div.style.background = 'rgba(255,255,255,0.9)';
+                        div.style.border = 'solid 1px #aaa';
+                        div.style.borderRadius = '3px';
+                        div.style.fontSize = '14px';
+                        div.style.lineHeight = '18px';
+                        div.style.color = '#333';
+                        div.style.fontFamily = 'Arial, sans-serif';
+                        div.innerHTML += '<div style="font-weight: bold; margin-bottom: 5px;">Legenda</div>';
+                        div.innerHTML += '<div><span style="color: red; font-size: 16px;">●</span> <span style="color: black">Assassinato</span></div>';
+                        div.innerHTML += '<div><span style="color: green; font-size: 16px;">●</span> <span style="color: black">Tentativa de assassinato</span></div>';
+                        div.innerHTML += '<div><span style="color: blue; font-size: 16px;">●</span> <span style="color: black">Ameaça de assassinato</span></div>';
+                        return div;
+                    };
+                    legend.addTo({{ this._parent.get_name() }});
+                {% endmacro %}
+            """)
+    
+    # Adicionar a legenda ao mapa
+    m.add_child(Legend())
+
     
     # Ajusta os limites do mapa para mostrar todos os pontos
     try:
@@ -201,7 +221,7 @@ else:
     
     # Renderiza o mapa
     st_folium(m, width=700, height=500)
-
+    
 # Linha do tempo
 st.subheader("Linha do Tempo")
 df_timeline = filtered[[
