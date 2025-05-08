@@ -212,7 +212,7 @@ if current_page == "home":
 
 elif current_page == "mapa":
     # Página do mapa
-    st.title("Monitor de Assassinatos Políticos no Brasil")
+    st.title("Assassinatos Políticos no Brasil")
     st.subheader("Mapa Interativo de Casos")
     
     # Verifica se há pontos válidos para plotar
@@ -288,8 +288,8 @@ elif current_page == "mapa":
 
 elif current_page == "timeline":
     # Página da linha do tempo
-    st.title("Monitor de Assassinatos Políticos no Brasil")
-    st.subheader("Linha do Tempo de Casos")
+    st.title("Assassinatos Políticos no Brasil")
+    st.subheader("Linha do Tempo")
     
     if len(filtered) > 0:
         # Seleciona colunas relevantes
