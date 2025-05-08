@@ -15,6 +15,14 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+# Inicialização do estado da sessão para navegação persistente
+if 'current_page' not in st.session_state:
+    st.session_state.current_page = "home"
+
+# Função para mudar de página
+def change_page(page):
+    st.session_state.current_page = page
+
 # Função para corrigir coordenadas
 def corrigir_coordenada(valor):
     if isinstance(valor, str):
@@ -129,11 +137,16 @@ pages = {
 # Barra lateral com navegação
 st.sidebar.title("Navegação")
 
-# Cria links para as páginas
-current_page = "home"
-for page_name, page_id in pages.items():
-    if st.sidebar.button(page_name):
-        current_page = page_id
+# Cria radio buttons para navegação - eles manterão o estado
+selected_page = st.sidebar.radio(
+    "Selecione uma página:",
+    list(pages.keys()),
+    index=list(pages.values()).index(st.session_state.current_page)
+)
+
+# Atualiza a página atual com base na seleção
+current_page = pages[selected_page]
+st.session_state.current_page = current_page
 
 # Carregar dados (comum a todas as páginas)
 df = load_data()
@@ -151,26 +164,26 @@ if current_page != "home":
     if "Ano" in df.columns and not df["Ano"].isna().all():
         min_year = int(df["Ano"].min()) if not pd.isna(df["Ano"].min()) else 2010
         max_year = int(df["Ano"].max()) if not pd.isna(df["Ano"].max()) else 2023
-        year_range = st.sidebar.slider("Ano", min_year, max_year, (min_year, max_year))
+        year_range = st.sidebar.slider("Ano", min_year, max_year, (min_year, max_year), key="year_slider")
     else:
         year_range = (2010, 2023)
 
     # Filtros seguros que verificam se a coluna existe
     if "Tipo_ação_vítima" in df.columns:
         tipos_disponiveis = df["Tipo_ação_vítima"].dropna().unique().tolist()
-        tipo_acao = st.sidebar.multiselect("Tipo de ação", tipos_disponiveis, default=tipos_disponiveis)
+        tipo_acao = st.sidebar.multiselect("Tipo de ação", tipos_disponiveis, default=tipos_disponiveis, key="tipo_acao")
     else:
         tipo_acao = []
 
     if "Vítima_Gênero/Sexo" in df.columns:
         generos_disponiveis = df["Vítima_Gênero/Sexo"].dropna().unique().tolist()
-        genero = st.sidebar.multiselect("Gênero da vítima", generos_disponiveis)
+        genero = st.sidebar.multiselect("Gênero da vítima", generos_disponiveis, key="genero")
     else:
         genero = []
 
     if "Vítimas_Etnia" in df.columns:
         etnias_disponiveis = df["Vítimas_Etnia"].dropna().unique().tolist()
-        etnia = st.sidebar.multiselect("Etnia da vítima", etnias_disponiveis)
+        etnia = st.sidebar.multiselect("Etnia da vítima", etnias_disponiveis, key="etnia")
     else:
         etnia = []
     
@@ -252,7 +265,7 @@ elif current_page == "mapa":
                     fill_color=get_color(tipo),
                     fill_opacity=0.7,
                     popup=folium.Popup(popup_info, max_width=300)
-                ).add_to(m)
+                ).add_to(marker_cluster)
                 
             except Exception as e:
                 # Silenciosamente ignora erros ao adicionar marcadores
