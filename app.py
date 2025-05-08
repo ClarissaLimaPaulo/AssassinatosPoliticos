@@ -178,7 +178,7 @@ else:
             # Silenciosamente ignora erros ao adicionar marcadores
             continue
     
-    # Adiciona legenda ao mapa
+      # Adiciona legenda ao mapa
     legend_html = """
     <div style="position: fixed; bottom: 50px; left: 50px; width: 220px;
     background-color: white; border:2px solid grey; z-index:9999; font-size:14px; padding: 10px; color: black;">
