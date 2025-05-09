@@ -397,11 +397,12 @@ elif current_page == "mapa":
 elif current_page == "timeline":
     # Página da linha do tempo original
     st.title("Assassinatos Políticos no Brasil")
+    st.subheader("Linha do Tempo de Casos")
     
     if len(filtered) > 0:
-        # Seleciona colunas relevantes
+        # Seleciona colunas relevantes - substituindo 'Cidade' por 'Região'
         colunas_disponiveis = ['Ano', 'Mês', 'Tipo_ação_vítima', 'Vítimas_Etnia',
-                            'Vítimas_Afiliação_1/Grupo', 'Cidade', 'Disputa']
+                            'Vítimas_Afiliação_1/Grupo', 'Região', 'Disputa']
         colunas_existentes = [col for col in colunas_disponiveis if col in filtered.columns]
         
         if len(colunas_existentes) >= 3:  # Mínimo necessário para criar a timeline
@@ -418,69 +419,72 @@ elif current_page == "timeline":
             
             # Cria coluna de data
             try:
-                date_cols = [col for col in ['year', 'month', 'day'] if col in df_timeline.columns]
-                if len(date_cols) > 0:
-                    # Certifique-se de que as colunas year e month são numéricas
-                    if 'year' in df_timeline.columns:
-                        df_timeline['year'] = pd.to_numeric(df_timeline['year'], errors='coerce')
-                    if 'month' in df_timeline.columns:
-                        df_timeline['month'] = pd.to_numeric(df_timeline['month'], errors='coerce')
+                # Certifique-se de que as colunas year e month são numéricas
+                if 'year' in df_timeline.columns:
+                    df_timeline['year'] = pd.to_numeric(df_timeline['year'], errors='coerce')
+                if 'month' in df_timeline.columns:
+                    df_timeline['month'] = pd.to_numeric(df_timeline['month'], errors='coerce')
+                
+                # Cria data com tratamento para valores não numéricos
+                df_timeline['Data'] = pd.to_datetime(df_timeline[['year', 'month', 'day']], errors='coerce')
+                
+                # Remove registros sem data válida e ordena
+                df_timeline = df_timeline.dropna(subset=['Data']).sort_values(by='Data')
+                
+                # Cria coluna de descrição para hover de forma segura usando concatenação direta
+                df_timeline['Descrição'] = ""
+                for i, row in df_timeline.iterrows():
+                    desc_parts = []
                     
-                    # Cria data com tratamento para valores não numéricos
-                    df_timeline['Data'] = pd.to_datetime(df_timeline[date_cols], errors='coerce')
-                    df_timeline = df_timeline.dropna(subset=['Data']).sort_values(by='Data')
-                    
-                    # Cria coluna de descrição para hover de forma segura
-                    df_timeline['Descrição'] = ""
-                    
-                    # Adiciona cada campo disponível à descrição
-                    for i, row in df_timeline.iterrows():
-                        desc_parts = []
+                    if 'Tipo_ação_vítima' in df_timeline.columns and not pd.isna(row.get('Tipo_ação_vítima')):
+                        desc_parts.append(f"Tipo: {row['Tipo_ação_vítima']}")
                         
-                        if 'Tipo_ação_vítima' in df_timeline.columns and not pd.isna(row.get('Tipo_ação_vítima')):
-                            desc_parts.append(f"Tipo: {row['Tipo_ação_vítima']}")
-                            
-                        if 'Vítimas_Etnia' in df_timeline.columns and not pd.isna(row.get('Vítimas_Etnia')):
-                            desc_parts.append(f"Etnia: {row['Vítimas_Etnia']}")
-                            
-                        if 'Vítimas_Afiliação_1/Grupo' in df_timeline.columns and not pd.isna(row.get('Vítimas_Afiliação_1/Grupo')):
-                            desc_parts.append(f"Grupo: {row['Vítimas_Afiliação_1/Grupo']}")
-                            
-                        if 'Cidade' in df_timeline.columns and not pd.isna(row.get('Cidade')):
-                            desc_parts.append(f"Cidade: {row['Cidade']}")
-                            
-                        if 'Disputa' in df_timeline.columns and not pd.isna(row.get('Disputa')):
-                            desc_parts.append(f"Disputa: {row['Disputa']}")
+                    if 'Vítimas_Etnia' in df_timeline.columns and not pd.isna(row.get('Vítimas_Etnia')):
+                        desc_parts.append(f"Etnia: {row['Vítimas_Etnia']}")
                         
-                        df_timeline.at[i, 'Descrição'] = "<br>".join(desc_parts) if desc_parts else "Sem informações adicionais"
+                    if 'Vítimas_Afiliação_1/Grupo' in df_timeline.columns and not pd.isna(row.get('Vítimas_Afiliação_1/Grupo')):
+                        desc_parts.append(f"Grupo: {row['Vítimas_Afiliação_1/Grupo']}")
+                        
+                    if 'Região' in df_timeline.columns and not pd.isna(row.get('Região')):
+                        desc_parts.append(f"Região: {row['Região']}")
+                        
+                    if 'Disputa' in df_timeline.columns and not pd.isna(row.get('Disputa')):
+                        desc_parts.append(f"Disputa: {row['Disputa']}")
                     
-                    # Cria o gráfico da linha do tempo
-                    fig = px.scatter(
-                        df_timeline, 
-                        x='Data', 
-                        y='Tipo_ação_vítima' if 'Tipo_ação_vítima' in df_timeline.columns else 'Disputa',
-                        color='Tipo_ação_vítima' if 'Tipo_ação_vítima' in df_timeline.columns else None,
-                        hover_name='Descrição',
-                        title='Linha do Tempo de Assassinatos Políticos',
-                        height=600,
-                        size_max=15,
-                        size=[10] * len(df_timeline)
-                    )
-                    
-                    # Configura o layout
-                    fig.update_layout(
-                        xaxis_title='Data',
-                        yaxis_title='Tipo de Ação',
-                        legend_title='Tipo',
-                        hovermode='closest'
-                    )
-                    
-                    # Exibe o gráfico
-                    st.plotly_chart(fig, use_container_width=True)
-                else:
-                    st.warning("Não foi possível criar a linha do tempo: faltam dados de data.")
+                    df_timeline.at[i, 'Descrição'] = "<br>".join(desc_parts) if desc_parts else "Sem informações adicionais"
+                
+                # Verifica se a coluna Região existe, caso contrário usa outra coluna
+                y_col = 'Região' if 'Região' in df_timeline.columns else ('Tipo_ação_vítima' if 'Tipo_ação_vítima' in df_timeline.columns else 'Disputa')
+                
+                # Cria o gráfico da linha do tempo com o estilo solicitado
+                fig = px.scatter(
+                    df_timeline,
+                    x='Data',
+                    y=y_col,
+                    color='Tipo_ação_vítima' if 'Tipo_ação_vítima' in df_timeline.columns else None,
+                    hover_data={'Data': True, y_col: False},
+                    hover_name=y_col,
+                    custom_data=['Descrição'],
+                    title='Linha do Tempo de Assassinatos Políticos',
+                    labels={y_col: 'Local'},
+                    height=600
+                )
+                
+                # Atualiza o formato do hover para mostrar a descrição customizada
+                fig.update_traces(hovertemplate='%{customdata[0]}<extra></extra>')
+                
+                # Configura o layout
+                fig.update_layout(
+                    xaxis_title='Data',
+                    yaxis_title='Região',
+                    showlegend=True
+                )
+                
+                # Exibe o gráfico
+                st.plotly_chart(fig, use_container_width=True)
             except Exception as e:
                 st.error(f"Erro ao criar a linha do tempo: {e}")
+                st.error(f"Detalhes: {str(e)}")
         else:
             st.warning("Não há colunas suficientes para criar a linha do tempo.")
     else:
