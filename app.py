@@ -246,8 +246,8 @@ elif current_page == "mapa":
             tiles='CartoDB positron'
         )
         
-        # Cria um cluster de marcadores para melhor visualização
-        marker_cluster = MarkerCluster().add_to(m)
+        # Removemos o MarkerCluster para mostrar pontos individuais
+        # marker_cluster = MarkerCluster().add_to(m)
         
         # Adiciona marcadores individuais ao mapa
         for _, row in filtered.iterrows():
@@ -272,7 +272,7 @@ elif current_page == "mapa":
                 <b>Disputa:</b> {disputa}<br>
                 """
                 
-                # Adiciona o marcador ao cluster
+                # Adiciona o marcador diretamente ao mapa (não ao cluster)
                 folium.CircleMarker(
                     location=[lat, lon],
                     radius=5,
@@ -281,7 +281,7 @@ elif current_page == "mapa":
                     fill_color=get_color(tipo),
                     fill_opacity=0.7,
                     popup=folium.Popup(popup_info, max_width=300)
-                ).add_to(marker_cluster)
+                ).add_to(m)
                 
             except Exception as e:
                 # Silenciosamente ignora erros ao adicionar marcadores
@@ -308,9 +308,9 @@ elif current_page == "timeline":
     st.subheader("Linha do Tempo Interativa")
     
     if len(filtered) > 0:
-        # Seleciona colunas relevantes
+        # Seleciona colunas relevantes - trocamos "Cidade" por "Região" 
         colunas_disponiveis = ['Ano', 'Mês', 'Tipo_ação_vítima', 'Vítimas_Etnia',
-                            'Vítimas_Afiliação_1/Grupo', 'Cidade', 'Disputa']
+                            'Vítimas_Afiliação_1/Grupo', 'Região', 'Disputa']
         colunas_existentes = [col for col in colunas_disponiveis if col in filtered.columns]
         
         if len(colunas_existentes) >= 3:  # Mínimo necessário para criar a timeline
@@ -340,31 +340,31 @@ elif current_page == "timeline":
                         descricao_parts.append("Etnia: " + df_timeline['Vítimas_Etnia'].fillna("Não informada"))
                     if 'Vítimas_Afiliação_1/Grupo' in df_timeline.columns:
                         descricao_parts.append("Afiliação: " + df_timeline['Vítimas_Afiliação_1/Grupo'].fillna("Não informada"))
-                    if 'Cidade' in df_timeline.columns:
-                        descricao_parts.append("Cidade: " + df_timeline['Cidade'].fillna("Não informada"))
+                    if 'Região' in df_timeline.columns:
+                        descricao_parts.append("Região: " + df_timeline['Região'].fillna("Não informada"))
                     if 'Disputa' in df_timeline.columns:
                         descricao_parts.append("Disputa: " + df_timeline['Disputa'].fillna("Não informada"))
                     
                     df_timeline['Descrição'] = ["<br>".join([p for p in row]) for row in zip(*[parts for parts in descricao_parts])]
                     
                     # Cria gráfico
-                    if 'Cidade' in df_timeline.columns and 'Tipo_ação_vítima' in df_timeline.columns:
+                    if 'Região' in df_timeline.columns and 'Tipo_ação_vítima' in df_timeline.columns:
                         fig = px.scatter(
                             df_timeline,
                             x='Data',
-                            y='Cidade',
+                            y='Região',  # Mudamos de "Cidade" para "Região"
                             color='Tipo_ação_vítima',
-                            hover_name='Cidade',
+                            hover_name='Região',  # Mudamos de "Cidade" para "Região"
                             custom_data=['Descrição'],
                             title="Linha do Tempo de Casos (2003-2023)",
-                            labels={'Cidade': 'Local', 'Data': 'Data', 'Tipo_ação_vítima': 'Tipo de Ação'},
+                            labels={'Região': 'Região', 'Data': 'Data', 'Tipo_ação_vítima': 'Tipo de Ação'},
                             height=700,
                             width=1000
                         )
                         fig.update_traces(hovertemplate='%{customdata[0]}<extra></extra>', marker=dict(size=10))
                         fig.update_layout(
                             xaxis_title="Data",
-                            yaxis_title="Cidade",
+                            yaxis_title="Região",  # Mudamos de "Cidade" para "Região"
                             showlegend=True,
                             legend_title="Tipo de Ação",
                             font=dict(size=12),
