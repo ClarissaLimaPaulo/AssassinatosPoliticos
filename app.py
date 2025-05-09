@@ -421,13 +421,13 @@ elif current_page == "timeline":
                 date_cols = [col for col in ['year', 'month', 'day'] if col in df_timeline.columns]
                 if len(date_cols) > 0:
                     # Certifique-se de que as colunas year e month são numéricas
-            if 'year' in df_timeline.columns:
-                df_timeline['year'] = pd.to_numeric(df_timeline['year'], errors='coerce')
-            if 'month' in df_timeline.columns:
-                df_timeline['month'] = pd.to_numeric(df_timeline['month'], errors='coerce')
-            
-            # Cria data com tratamento para valores não numéricos
-            df_timeline['Data'] = pd.to_datetime(df_timeline[date_cols], errors='coerce')
+                    if 'year' in df_timeline.columns:
+                        df_timeline['year'] = pd.to_numeric(df_timeline['year'], errors='coerce')
+                    if 'month' in df_timeline.columns:
+                        df_timeline['month'] = pd.to_numeric(df_timeline['month'], errors='coerce')
+                    
+                    # Cria data com tratamento para valores não numéricos
+                    df_timeline['Data'] = pd.to_datetime(df_timeline[date_cols], errors='coerce')
                     df_timeline = df_timeline.dropna(subset=['Data']).sort_values(by='Data')
                     
                     # Cria coluna de descrição para hover de forma segura
