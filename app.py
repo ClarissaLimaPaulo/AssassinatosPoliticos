@@ -10,7 +10,7 @@ from jinja2 import Template
 # Configuração da página
 st.set_page_config(
     page_title="Assassinatos Políticos no Brasil",
-    page_icon="🗺️",
+    page_icon="🔍",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -205,6 +205,17 @@ if current_page == "home":
     Levantamento e análise de letalidade política no Brasil, com objetivo de observar uma relação 
     entre violência política e hierarquia social, além de padrões recorrentes de violência política 
     que se cristalizam em estilos de assassinato político.
+
+    Pesquisadores:
+    Clarissa Lima
+    Guilherme Olímpio Fagundes
+    Jéssica Höring
+    José Oliveira
+    Patricia Rezende
+    Paulo Castro
+    Rafaela Pannain
+    Samaérika Sousa
+    Viviane Brito
     """)
     
     # Adicionar dados resumidos
@@ -384,5 +395,5 @@ elif current_page == "timeline":
 
 # Adiciona informações de rodapé
 st.sidebar.markdown("---")
-st.sidebar.markdown("**Desenvolvido por:** Equipe de Pesquisa")
-st.sidebar.markdown("**Contato:** pesquisa@exemplo.com")
+st.sidebar.markdown("**Núcleo de Movimentos Sociais e Instituições Políticas (NIPOMS - Cebrap)")
+st.sidebar.markdown("**Global Initiative Against Transnational Organized Crime (GI-TOC)")
