@@ -9,10 +9,10 @@ from jinja2 import Template
 
 # Configuração da página
 st.set_page_config(
-    page_title="Assassinatos Políticos no Brasil",
-    page_icon=" ",
-    layout="wide",
-    initial_sidebar_state="expanded"
+page_title="Assassinatos Políticos no Brasil",
+page_icon=" ",
+layout="wide",
+initial_sidebar_state="expanded"
 )
 
 # Inicialização do estado da sessão para navegação persistente
@@ -284,75 +284,39 @@ elif current_page == "mapa":
         st_folium(m, width=700, height=500)
 
 elif current_page == "timeline":
-    # Página da linha do tempo
     st.title("Assassinatos Políticos no Brasil")
-    
+    st.subheader("Linha do Tempo Interativa")
+
     if len(filtered) > 0:
-        # Seleciona colunas relevantes
-        colunas_disponiveis = ['Ano', 'Mês', 'Tipo_ação_vítima', 'Vítimas_Etnia',
-                            'Vítimas_Afiliação_1/Grupo', 'Cidade', 'Disputa']
-        colunas_existentes = [col for col in colunas_disponiveis if col in filtered.columns]
-        
-        if len(colunas_existentes) >= 3:  # Mínimo necessário para criar a timeline
-            df_timeline = filtered[colunas_existentes].copy()
-            
-            # Renomeia colunas para processamento de data
-            if 'Ano' in df_timeline.columns:
-                df_timeline = df_timeline.rename(columns={'Ano': 'year'})
-            if 'Mês' in df_timeline.columns:
-                df_timeline = df_timeline.rename(columns={'Mês': 'month'})
-                
-            # Adiciona coluna de dia para criar datetime
-            df_timeline['day'] = 1
-            
-            # Cria coluna de data
-            try:
-                date_cols = [col for col in ['year', 'month', 'day'] if col in df_timeline.columns]
-                if len(date_cols) > 0:
-                    df_timeline['Data'] = pd.to_datetime(df_timeline[date_cols], errors='coerce')
-                    df_timeline = df_timeline.dropna(subset=['Data']).sort_values(by='Data')
-                    
-                    # Cria coluna de descrição para hover
-                    descricao_parts = []
-                    if 'Tipo_ação_vítima' in df_timeline.columns:
-                        descricao_parts.append("Tipo: " + df_timeline['Tipo_ação_vítima'].fillna("Não informado"))
-                    if 'Vítimas_Etnia' in df_timeline.columns:
-                        descricao_parts.append("Etnia: " + df_timeline['Vítimas_Etnia'].fillna("Não informada"))
-                    if 'Vítimas_Afiliação_1/Grupo' in df_timeline.columns:
-                        descricao_parts.append("Afiliação: " + df_timeline['Vítimas_Afiliação_1/Grupo'].fillna("Não informada"))
-                    if 'Cidade' in df_timeline.columns:
-                        descricao_parts.append("Cidade: " + df_timeline['Cidade'].fillna("Não informada"))
-                    if 'Disputa' in df_timeline.columns:
-                        descricao_parts.append("Disputa: " + df_timeline['Disputa'].fillna("Não informada"))
-                    
-                    df_timeline['Descrição'] = ["<br>".join([p for p in row]) for row in zip(*[parts for parts in descricao_parts])]
-                    
-                    # Cria gráfico
-                    if 'Cidade' in df_timeline.columns and 'Tipo_ação_vítima' in df_timeline.columns:
-                        fig = px.scatter(
-                            df_timeline,
-                            x='Data',
-                            y='Cidade',
-                            color='Tipo_ação_vítima',
-                            hover_name='Cidade',
-                            custom_data=['Descrição'],
-                            title="Linha do Tempo de Casos",
-                            labels={'Cidade': 'Local'},
-                            height=600
-                        )
-                        fig.update_traces(hovertemplate='%{customdata[0]}<extra></extra>')
-                        fig.update_layout(xaxis_title="Data", yaxis_title="Cidade", showlegend=True)
-                        st.plotly_chart(fig)
-                    else:
-                        st.warning("Dados insuficientes para criar a linha do tempo.")
-                else:
-                    st.warning("Colunas de data necessárias não encontradas para criar a linha do tempo.")
-            except Exception as e:
-                st.error(f"Erro ao criar a linha do tempo: {e}")
+        colunas_necessarias = ['Ano', 'Mês', 'Tipo_acao_vitima', 'Vítimas_Etnia', 'Vítima_Gênero/Sexo', 'Região']
+        if all(col in filtered.columns for col in colunas_necessarias):
+            df_timeline = filtered[colunas_necessarias].copy()
+
+            df_timeline = df_timeline.dropna(subset=['Ano', 'Mês'])
+            df_timeline['Ano'] = df_timeline['Ano'].astype(int)
+            df_timeline['Mês'] = df_timeline['Mês'].astype(int)
+            df_timeline['Data'] = pd.to_datetime(df_timeline[['Ano', 'Mês']].assign(DIA=1))
+
+            cor_por = st.radio("Colorir por:", ['Tipo_acao_vitima', 'Vítima_Gênero/Sexo', 'Vítimas_Etnia'], horizontal=True)
+
+            fig = px.scatter(
+                df_timeline,
+                x='Data',
+                y='Região',
+                color=cor_por,
+                labels={
+                    "Data": "Mês e Ano",
+                    "Região": "Região",
+                    cor_por: cor_por.replace('_', ' ')
+                },
+                title="Linha do Tempo dos Assassinatos Políticos",
+                height=500
+            )
+            st.plotly_chart(fig, use_container_width=True)
         else:
-            st.warning("Dados insuficientes para criar a linha do tempo.")
+            st.warning("Dados insuficientes para gerar a linha do tempo.")
     else:
-        st.warning("Não há dados para exibir na linha do tempo com os filtros atuais.")
+        st.warning("Não há dados para exibir com os filtros atuais."
 
 # Adiciona informações de rodapé
 st.sidebar.markdown("---")
