@@ -395,5 +395,5 @@ elif current_page == "timeline":
 
 # Adiciona informações de rodapé
 st.sidebar.markdown("---")
-st.sidebar.markdown("**Núcleo de Movimentos Sociais e Instituições Políticas (NIPOMS - Cebrap)")
-st.sidebar.markdown("**Global Initiative Against Transnational Organized Crime (GI-TOC)")
+st.sidebar.markdown("Núcleo de Movimentos Sociais e Instituições Políticas (NIPOMS - Cebrap)")
+st.sidebar.markdown("Global Initiative Against Transnational Organized Crime (GI-TOC)")
