@@ -207,15 +207,7 @@ if current_page == "home":
     que se cristalizam em estilos de assassinato político.
 
     Pesquisadores:
-    Clarissa Lima
-    Guilherme Olímpio Fagundes
-    Jéssica Höring
-    José Oliveira
-    Patricia Rezende
-    Paulo Castro
-    Rafaela Pannain
-    Samaérika Sousa
-    Viviane Brito
+    Clarissa Lima, Guilherme Olímpio Fagundes, Jéssica Höring, José Oliveira, Patricia Rezende, Paulo Castro, Rafaela Pannain, Samaérika Sousa e Viviane Brito
     """)
     
     # Adicionar dados resumidos
